@@ -8,18 +8,71 @@ Original file is located at
 """
 
 from flask import Flask, render_template, request
-from analysis import get_top_dividend_companies
+import pandas as pd
+import json
+import plotly.express as px
+import plotly
+
+from analysis import (
+    get_top_dividend_companies, generate_dividend_plot,
+    get_high_performing_stocks, get_most_volatile_stocks, get_least_volatile_stocks
+)
+
+def generate_chart(df, x_col="Brand_Name", y_col=None, title="Chart"):
+    if df is None or df.empty:
+        return ""
+    if y_col is None:
+        y_col = df.columns[1]  # fallback to second column
+    fig = px.bar(df, x=x_col, y=y_col, title=title)
+    return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
 app = Flask(__name__)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+    # Initialize variables as None
     summary = None
+    chart_json = ""
+    high_perf = None
+    high_perf_plot = ""
+    most_volatile = None
+    most_volatile_plot = ""
+    least_volatile = None
+    least_volatile_plot = ""
+
+    df = pd.read_csv("Stock_Data_After_2015.csv")
+    df['Date'] = pd.to_datetime(df['Date'])
+
     if request.method == "POST":
         industry = request.form.get("industry")
+
         summary = get_top_dividend_companies(industry)
-    return render_template("index.html", summary=summary)
+        chart_json = generate_dividend_plot(summary)
+
+        filtered_df = df
+        if industry:
+            filtered_df = df[df["Industry_Tag"] == industry]
+
+        high_perf = get_high_performing_stocks(filtered_df)
+        high_perf_plot = generate_chart(high_perf, y_col="Cumulative Return", title="Top 5 High-Performing Stocks")
+
+        most_volatile = get_most_volatile_stocks(filtered_df)
+        most_volatile_plot = generate_chart(most_volatile, y_col="Volatility", title="Top 5 Most Volatile Stocks")
+
+        least_volatile = get_least_volatile_stocks(filtered_df)
+        least_volatile_plot = generate_chart(least_volatile, y_col="Volatility", title="Top 5 Least Volatile Stocks")
+
+    return render_template(
+        "index.html",
+        summary=summary,
+        chart_json=chart_json,
+        high_perf=high_perf,
+        high_perf_plot=high_perf_plot,
+        most_volatile=most_volatile,
+        most_volatile_plot=most_volatile_plot,
+        least_volatile=least_volatile,
+        least_volatile_plot=least_volatile_plot
+    )
 
 if __name__ == "__main__":
-    app.run(debug=True)
-
+    app.run(debug=True, host='0.0.0.0', port=5000)
