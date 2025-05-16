@@ -8,11 +8,37 @@ Original file is located at
 """
 
 import pandas as pd
+import plotly.express as px
+import json
+import plotly
 
 def get_top_dividend_companies(industry=None):
     df = pd.read_csv("Stock_Data_After_2015.csv")
+    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
     if industry:
         df = df[df["Industry_Tag"] == industry]
-    result = df.groupby("Brand_Name")["Dividends"].sum().nlargest(5)
-    return result.reset_index()
+    result = df.groupby("Brand_Name")["Dividends"].sum().nlargest(5).reset_index()
+    return result
+
+def generate_dividend_plot(df):
+    if df.empty:
+        return ""
+    fig = px.bar(df, x="Brand_Name", y="Dividends", title="Top 5 Dividend-Paying Companies")
+    return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+def get_high_performing_stocks(df, top_n=5):
+    df['Returns'] = df.groupby('Ticker')['Close'].pct_change()
+    df['Cumulative Return'] = df.groupby('Ticker')['Returns'].transform(lambda x: (1 + x).cumprod())
+    result = df.groupby('Brand_Name')['Cumulative Return'].last().nlargest(top_n).reset_index()
+    return result
+
+def get_most_volatile_stocks(df, top_n=5):
+    vol = df.groupby('Brand_Name')['Close'].std().nlargest(top_n).reset_index()
+    vol.columns = ['Brand_Name', 'Volatility']
+    return vol
+
+def get_least_volatile_stocks(df, top_n=5):
+    vol = df.groupby('Brand_Name')['Close'].std().nsmallest(top_n).reset_index()
+    vol.columns = ['Brand_Name', 'Volatility']
+    return vol
 
