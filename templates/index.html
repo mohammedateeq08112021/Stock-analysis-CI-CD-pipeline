@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head>
+    <title>Stock Dashboard</title>
+</head>
+<body>
+    <h1>Top Dividend-Paying Companies</h1>
+    <form method="POST">
+        <label for="industry">Filter by Industry (optional):</label>
+        <input type="text" name="industry" placeholder="e.g. finance">
+        <button type="submit">Submit</button>
+    </form>
+    {% if summary %}
+        <h2>Top 5 Companies:</h2>
+        <ul>
+            {% for _, row in summary.iterrows() %}
+                <li>{{ row['Brand_Name'] }} - Dividends: {{ row['Dividends'] }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>
