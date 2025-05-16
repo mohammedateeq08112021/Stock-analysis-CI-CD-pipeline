@@ -1,22 +1,86 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-    <title>Stock Dashboard</title>
+    <meta charset="UTF-8">
+    <title>Stock Data Analysis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
-<body>
-    <h1>Top Dividend-Paying Companies</h1>
-    <form method="POST">
-        <label for="industry">Filter by Industry (optional):</label>
-        <input type="text" name="industry" placeholder="e.g. finance">
-        <button type="submit">Submit</button>
-    </form>
-    {% if summary %}
-        <h2>Top 5 Companies:</h2>
-        <ul>
-            {% for _, row in summary.iterrows() %}
-                <li>{{ row['Brand_Name'] }} - Dividends: {{ row['Dividends'] }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+<body class="bg-light">
+    <div class="container py-5">
+        <h1 class="text-center mb-4 display-5">📊 Stock Data Analysis</h1>
+        <form method="POST" class="d-flex justify-content-center mb-5">
+            <input type="text" name="industry" class="form-control w-25 me-2" placeholder="e.g. finance">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+
+        {% if summary is not none and not summary.empty %}
+        <div class="card mb-4 p-3">
+            <h5 class="card-title">Top 5 Dividend-Paying Companies</h5>
+            <ul class="list-group list-group-flush mb-3">
+                {% for _, row in summary.iterrows() %}
+                <li class="list-group-item">
+                    <strong>{{ row['Brand_Name'] }}</strong> — Dividends: {{ row['Dividends'] }}
+                </li>
+                {% endfor %}
+            </ul>
+            {% if chart_json %}
+            <div id="dividend-chart"></div>
+            <script>
+                var chart = {{ chart_json | safe }};
+                Plotly.newPlot('dividend-chart', chart.data, chart.layout);
+            </script>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if high_perf is not none and not high_perf.empty %}
+        <div class="card mb-4 p-3">
+            <h5 class="card-title">🔥 Top 5 High-Performing Stocks</h5>
+            <ul class="list-group list-group-flush mb-3">
+                {% for _, row in high_perf.iterrows() %}
+                <li class="list-group-item">{{ row['Brand_Name'] }} — Cumulative Return: {{ row['Cumulative Return'] | round(2) }}</li>
+                {% endfor %}
+            </ul>
+            <div id="return-chart"></div>
+            <script>
+                var returnChart = {{ high_perf_plot | safe }};
+                Plotly.newPlot('return-chart', returnChart.data, returnChart.layout);
+            </script>
+        </div>
+        {% endif %}
+
+        {% if most_volatile is not none and not most_volatile.empty %}
+        <div class="card mb-4 p-3">
+            <h5 class="card-title">⚠️ Most Volatile Stocks</h5>
+            <ul class="list-group list-group-flush mb-3">
+                {% for _, row in most_volatile.iterrows() %}
+                <li class="list-group-item">{{ row['Brand_Name'] }} — Volatility: {{ row['Volatility'] | round(2) }}</li>
+                {% endfor %}
+            </ul>
+            <div id="vol-chart"></div>
+            <script>
+                var volChart = {{ most_volatile_plot | safe }};
+                Plotly.newPlot('vol-chart', volChart.data, volChart.layout);
+            </script>
+        </div>
+        {% endif %}
+
+        {% if least_volatile is not none and not least_volatile.empty %}
+        <div class="card mb-4 p-3">
+            <h5 class="card-title">🧘 Least Volatile Stocks</h5>
+            <ul class="list-group list-group-flush mb-3">
+                {% for _, row in least_volatile.iterrows() %}
+                <li class="list-group-item">{{ row['Brand_Name'] }} — Volatility: {{ row['Volatility'] | round(2) }}</li>
+                {% endfor %}
+            </ul>
+            <div id="low-vol-chart"></div>
+            <script>
+                var lowVolChart = {{ least_volatile_plot | safe }};
+                Plotly.newPlot('low-vol-chart', lowVolChart.data, lowVolChart.layout);
+            </script>
+        </div>
+        {% endif %}
+    </div>
 </body>
 </html>
