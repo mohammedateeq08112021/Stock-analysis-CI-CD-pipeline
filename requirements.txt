@@ -1,7 +1,6 @@
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import datetime as dt
-import plotly.express as px
-import plotly.express as px
+numpy==1.24.4
+pandas==2.2.2
+matplotlib==3.8.4
+seaborn==0.12.2
+plotly==5.20.0
+flask
